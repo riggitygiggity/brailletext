@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Braille Translator</title>
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkJyYWlsbGVCZXR0ZXIiLAogICJzaG9ydF9uYW1lIjogIkJyYWlsbGUiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0ZjRmOSIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDdiZmYiCn0=">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: #f4f4f9; color: #333; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h2 { margin-top: 0; color: #007bff; }
+        textarea { width: 100%; height: 120px; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 18px; -webkit-appearance: none; }
+        .output-container { position: relative; background: #f8f9fa; padding: 20px; border: 1px dashed #cbd5e0; border-radius: 8px; min-height: 100px; margin-top: 15px; }
+        #brailleOutput { font-size: 28px; word-wrap: break-word; white-space: pre-wrap; color: #2d3748; }
+        .controls { display: flex; gap: 15px; margin: 15px 0; font-weight: 500; }
+        button { cursor: pointer; background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; transition: transform 0.1s; }
+        button:active { transform: scale(0.98); }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: #28a745; width: auto; padding: 5px 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Braille Translator</h2>
+    
+    <label for="englishInput">Type English here:</label>
+    <textarea id="englishInput" placeholder="Hello..."></textarea>
+
+    <div class="controls">
+        <label><input type="radio" name="mode" value="g1" checked> Grade 1</label>
+        <label><input type="radio" name="mode" value="g2"> Grade 2</label>
+    </div>
+
+    <div class="output-container">
+        <button class="copy-btn" onclick="copyToClipboard()">Copy</button>
+        <div id="brailleOutput"></div>
+    </div>
+</div>
+
+<script>
+    // Fixed: 'o' is now '⠕' (was '⠓')
+    const alphabet = {
+        'a': '⠁', 'b': '⠃', 'c': '⠉', 'd': '⠙', 'e': '⠑', 'f': '⠋', 'g': '⠛', 'h': '⠓', 'i': '⠊', 'j': '⠚', 'k': '⠅', 'l': '⠇', 'm': '⠍', 'n': '⠝', 'o': '⠕', 'p': '⠏', 'q': '⠟', 'r': '⠗', 's': '⠎', 't': '⠞', 'u': '⠥', 'v': '⠧', 'w': '⠺', 'x': '⠭', 'y': '⠽', 'z': '⠵',
+        '1': '⠼⠁', '2': '⠼⠃', '3': '⠼⠉', '4': '⠼⠙', '5': '⠼⠑', '6': '⠼⠋', '7': '⠼⠛', '8': '⠼⠓', '9': '⠼⠊', '0': '⠼⠚',
+        ' ': ' ', '.': '⠲', ',': '⠂', ';': '⠆', ':': '⠒', '!': '⠖', '?': '⠦', '"': '⠐⠂', '(': '⠐⠣', ')': '⠐⠜', '-': '⠤', "'": '⠄'
+    };
+
+    const contractions = {
+        "and": "⠿", "for": "⠿", "with": "⠾", "ing": "⠬", "ch": "⠡", "sh": "⠱", "th": "⠹", "wh": "⠱", "ou": "⠳"
+    };
+
+    const input = document.getElementById('englishInput');
+    const output = document.getElementById('brailleOutput');
+
+    function translate() {
+        let text = input.value.toLowerCase();
+        let isGrade2 = document.querySelector('input[name="mode"]:checked').value === 'g2';
+        
+        if (isGrade2) {
+            for (const [key, val] of Object.entries(contractions)) {
+                text = text.split(key).join(val);
+            }
+        }
+
+        let result = "";
+        for (let char of text) {
+            result += alphabet[char] || char; 
+        }
+        output.innerText = result;
+
+        // Native Haptic Feedback
+        if (text.length > 0 && window.navigator.vibrate) {
+            window.navigator.vibrate(10); 
+        }
+    }
+
+    function copyToClipboard() {
+        const text = output.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Copied!");
+        });
+    }
+
+    input.addEventListener('input', translate);
+    document.getElementsByName('mode').forEach(m => m.addEventListener('change', translate));
+
+    // Simple Service Worker to make it "Installable"
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ID0+IHsgfSk7');
+    }
+</script>
+
+</body>
+</html>
